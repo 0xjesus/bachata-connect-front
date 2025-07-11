@@ -1,15 +1,11 @@
-<!-- components/event/EventCard.vue -->
 <template>
 	<NuxtLink
 		:to="`/events/${event.publicSlug}`"
 		class="group block relative overflow-hidden rounded-2xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-2"
 	>
-		<!-- Card container with glassmorphism -->
 		<div class="card-glass h-full relative overflow-hidden">
 
-			<!-- Image container with overlay -->
 			<div class="relative h-48 overflow-hidden rounded-t-2xl">
-				<!-- Cover image -->
 				<img
 					v-if="event.coverImage"
 					:src="event.coverImage.metas.location"
@@ -17,7 +13,6 @@
 					class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
 				/>
 
-				<!-- 🎨 FALLBACK IMAGE (CORREGIDO) -->
 				<div
 					v-else
 					class="relative w-full h-full overflow-hidden"
@@ -30,7 +25,6 @@
 					<div class="absolute inset-0 bg-dance-gradient opacity-60"></div>
 				</div>
 
-				<!-- Status badge -->
 				<div class="absolute top-3 left-3">
 					<span
 						class="px-3 py-1 rounded-full text-xs font-bold glass-intense"
@@ -40,7 +34,6 @@
 					</span>
 				</div>
 
-				<!-- Progress overlay -->
 				<div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
 					<div class="w-full bg-white/20 rounded-full h-2 mb-2">
 						<div
@@ -55,16 +48,11 @@
 				</div>
 			</div>
 
-			<!-- Content area -->
 			<div class="p-6 space-y-4">
-				<!-- resto del contenido existente... -->
-
-				<!-- Title and host -->
 				<div>
 					<h3 class="text-xl font-bold text-white mb-2 line-clamp-2 group-hover:text-primary transition-colors duration-300">
 						{{ event.title }}
 					</h3>
-
 					<div class="flex items-center space-x-2 text-white/70">
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path
@@ -78,9 +66,7 @@
 					</div>
 				</div>
 
-				<!-- Stats row -->
 				<div class="grid grid-cols-3 gap-4 text-center">
-					<!-- Current amount -->
 					<div class="space-y-1">
 						<div class="text-primary font-bold text-lg">
 							${{ formatAmount(event.currentAmount) }}
@@ -88,7 +74,6 @@
 						<div class="text-white/60 text-xs">Recaudado</div>
 					</div>
 
-					<!-- Target amount -->
 					<div class="space-y-1">
 						<div class="text-white font-bold text-lg">
 							${{ formatAmount(event.targetAmount) }}
@@ -96,7 +81,6 @@
 						<div class="text-white/60 text-xs">Meta</div>
 					</div>
 
-					<!-- Days left -->
 					<div class="space-y-1">
 						<div class="text-secondary font-bold text-lg">
 							{{ participantCount }}
@@ -105,7 +89,6 @@
 					</div>
 				</div>
 
-				<!-- Tags/Categories -->
 				<div v-if="eventTags.length" class="flex flex-wrap gap-2">
 					<span
 						v-for="tag in eventTags.slice(0, 3)"
@@ -116,7 +99,6 @@
 					</span>
 				</div>
 
-				<!-- Action area -->
 				<div class="pt-2">
 					<div class="flex items-center justify-between">
 						<div class="flex items-center space-x-1 text-white/60">
@@ -131,7 +113,6 @@
 							<span class="text-xs">{{ timeLeft }}</span>
 						</div>
 
-						<!-- CTA button -->
 						<div class="btn-primary px-4 py-2 text-sm rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
 							Ver Evento
 						</div>
@@ -139,7 +120,6 @@
 				</div>
 			</div>
 
-			<!-- Hover glow effect -->
 			<div class="absolute inset-0 rounded-2xl bg-brand-gradient opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none" />
 		</div>
 	</NuxtLink>
@@ -153,7 +133,6 @@
 		},
 	});
 
-	// Progress percentage calculation
 	const progressPercentage = computed(() => {
 		if(!props.event || !props.event.targetAmount || +props.event.targetAmount === 0) {
 			return 0;
@@ -162,13 +141,12 @@
 		return Math.min(percentage, 100);
 	});
 
-	// Status computation
 	const statusText = computed(() => {
 		const status = props.event.status || 'FUNDING';
 		const statusMap = {
 			'FUNDING': 'Activo',
-			'FUNDED': 'Financiado',
-			'COMPLETED': 'Completado',
+			'CONFIRMED': 'Meta Alcanzada',
+			'COMPLETED': 'Realizado',
 			'CANCELLED': 'Cancelado',
 		};
 		return statusMap[status] || 'Activo';
@@ -178,14 +156,44 @@
 		const status = props.event.status || 'FUNDING';
 		const classMap = {
 			'FUNDING': 'text-primary bg-primary/20 border border-primary/30',
-			'FUNDED': 'text-success bg-success/20 border border-success/30',
-			'COMPLETED': 'text-blue bg-blue/20 border border-blue/30',
+			'CONFIRMED': 'text-success bg-success/20 border border-success/30',
+			'COMPLETED': 'text-blue-400 bg-blue-400/20 border border-blue-400/30',
 			'CANCELLED': 'text-error bg-error/20 border border-error/30',
 		};
 		return classMap[status] || 'text-primary bg-primary/20 border border-primary/30';
 	});
 
-	// Helper functions
+	const participantCount = computed(() => {
+		return props.event._count?.participants || 0;
+	});
+
+	const eventTags = computed(() => {
+		return props.event.tags || props.event.metas?.tags || [];
+	});
+
+	const timeLeft = computed(() => {
+		if(!props.event.fundingDeadline) return 'No definido';
+		const now = new Date();
+		const deadline = new Date(props.event.fundingDeadline);
+		const diffTime = deadline - now;
+
+		if(diffTime <= 0) {
+			return props.event.status === 'FUNDING' ? 'Finalizando...' : 'Finalizado';
+		}
+
+		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+		if(diffDays > 1) return `${ diffDays } días restantes`;
+		if(diffDays === 1) return 'Termina mañana';
+
+		const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
+		if(diffHours > 1) return `Termina en ${ diffHours } horas`;
+
+		const diffMinutes = Math.ceil(diffTime / (1000 * 60));
+		if(diffMinutes > 1) return `Termina en ${ diffMinutes } minutos`;
+
+		return 'Termina pronto';
+	});
+
 	function formatAmount(amount) {
 		const num = Number(amount) || 0;
 		if(num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -193,37 +201,20 @@
 		return num.toLocaleString();
 	}
 
-	// 🔧 FUNCIÓN CORREGIDA - Cambié las rutas
 	function getEventTypeImage(title) {
 		const titleLower = title.toLowerCase();
-
 		if(titleLower.includes('festival')) {
-			return '/images/events/festival-default.jpg';  // Cambié a .jpg
+			return '/images/events/festival-default.png';
 		} else if(titleLower.includes('workshop') || titleLower.includes('clase')) {
-			return '/images/events/workshop-default.jpg';
+			return '/images/events/workshop-default.png';
 		} else if(titleLower.includes('social')) {
-			return '/images/events/social-default.jpg';
+			return '/images/events/social-default.png';
 		} else if(titleLower.includes('competencia')) {
-			return '/images/events/competition-default.jpg';
+			return '/images/events/competition-default.png';
 		} else {
 			return '/images/events/general-default.jpg';
 		}
 	}
-
-	// Mock data for demo
-	const participantCount = computed(() => {
-		return props.event.participants?.length || Math.floor(Math.random() * 50) + 1;
-	});
-
-	const eventTags = computed(() => {
-		const allTags = [ 'Bachata', 'Social', 'Festival', 'Workshop', 'Competencia', 'Fiesta' ];
-		return allTags.slice(0, Math.floor(Math.random() * 3) + 1);
-	});
-
-	const timeLeft = computed(() => {
-		const options = [ '5 días', '2 semanas', '1 mes', '3 días', '1 semana' ];
-		return options[Math.floor(Math.random() * options.length)];
-	});
 </script>
 
 <style scoped>

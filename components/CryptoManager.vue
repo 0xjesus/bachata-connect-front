@@ -92,48 +92,48 @@
 				</h3>
 				<form @submit.prevent="handleWithdraw" class="space-y-6">
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-						<div>
-							<label
-								for="address"
-								class="block text-sm font-semibold text-white/90 mb-2"
-							>Dirección de Destino</label>
-							<select
-								id="address"
-								v-model="withdrawalRequest.addressId"
-								class="input-glass"
-								:disabled="addresses.length === 0"
-							>
-								<option
-									:value="null"
-									disabled
-								>{{ addresses.length > 0 ? 'Selecciona una dirección' : 'Añade una dirección primero' }}</option>
-								<option
-									v-for="addr in addresses"
-									:key="addr.id"
-									:value="addr.id"
-								>{{ addr.label }} ({{ addr.address.slice(0, 6) }}...{{ addr.address.slice(-4) }})</option>
-							</select>
-						</div>
-						<div>
-							<label
-								for="amount"
-								class="block text-sm font-semibold text-white/90 mb-2"
-							>Monto a Retirar</label>
-							<div class="relative">
-								<input
-									id="amount"
-									v-model.number="withdrawalRequest.amount"
-									type="number"
-									placeholder="0.00"
-									required
-									min="1"
-									step="any"
-									class="input-glass pl-4 pr-16"
-								/>
-								<span class="absolute inset-y-0 right-4 flex items-center text-white/60 font-bold">MXNB</span>
-							</div>
-						</div>
-					</div>
+    <div>
+       <label
+          for="address"
+          class="block text-sm font-semibold text-white/90 mb-2"
+       >Dirección de Destino</label>
+       <select
+          id="address"
+          v-model="withdrawalRequest.addressId"
+          class="input-glass"
+          :disabled="addresses.length === 0"
+       >
+          <option
+             :value="null"
+             disabled
+          >{{ addresses.length > 0 ? 'Selecciona una dirección' : 'Añade una dirección primero' }}</option>
+          <option
+             v-for="addr in addresses"
+             :key="addr.id"
+             :value="addr.id"
+          >{{ addr.label }} ({{ addr.address.slice(0, 6) }}...{{ addr.address.slice(-4) }})</option>
+       </select>
+    </div>
+    <div>
+       <label
+          for="amount"
+          class="block text-sm font-semibold text-white/90 mb-2"
+       >Monto a Retirar</label>
+       <div class="relative">
+          <input
+             id="amount"
+             v-model.number="withdrawalRequest.amount"
+             type="number"
+             placeholder="0.00"
+             required
+             min="1"
+             step="any"
+             class="input-glass pl-4 pr-16"
+          />
+          <span class="absolute inset-y-0 right-4 flex items-center text-white/60 font-bold">MXNB</span>
+       </div>
+    </div>
+</div>
 					<div class="card-glass p-4 rounded-xl space-y-4">
 						<div class="flex justify-between items-center text-sm">
 							<span class="text-white/70">Tu Saldo Disponible:</span>
@@ -462,4 +462,17 @@
 		opacity: 0;
 		transform: translateX(30px);
 	}
+	select.input-glass option {
+        color: black;
+        background-color: white;
+    }
+
+    .list-enter-active, .list-leave-active {
+        transition: all 0.5s ease;
+    }
+
+    .list-enter-from, .list-leave-to {
+        opacity: 0;
+        transform: translateX(30px);
+    }
 </style>

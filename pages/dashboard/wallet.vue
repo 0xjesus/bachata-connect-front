@@ -41,39 +41,39 @@
 							</div>
 
 							<div class="space-y-2">
-								<div v-if="balance" class="text-6xl font-bold text-success animate-glow">
-									${{ formatMoney(balance.available) }}
-								</div>
-								<!-- REEMPLAZAR LÍNEA 47-51 por esto: -->
-								<div v-else-if="!fundingClabe" class="text-center">
-									<!-- 🎨 NUEVA IMAGEN WALLET -->
-									<img
-										src="/images/dashboard/digital-wallet.png"
-										alt="Digital Wallet"
-										class="w-24 h-24 mx-auto mb-4 opacity-70"
-									/>
-									<div class="text-4xl font-bold text-warning">$0.00</div>
-								</div>
-
-								<div class="flex items-center justify-center space-x-2 text-white/60">
-									<span class="text-lg font-medium">{{ balance?.currency || 'MXNB' }}</span>
-									<span>•</span>
-									<div class="flex items-center space-x-1">
-										<span
-											class="w-2 h-2 rounded-full"
-											:class="getBalanceStatusColor(balance)"
-										></span>
-										<span class="text-sm">{{ getBalanceStatusText(balance) }}</span>
+								<template v-if="balance">
+									<div class="text-6xl font-bold text-success animate-glow">
+										${{ formatMoney(balance.available) }}
 									</div>
-								</div>
-
-								<div v-if="balance" class="text-xs text-white/50 mt-2 space-y-1">
-									<div>Total: ${{ formatMoney(balance.total) }}</div>
-									<div v-if="parseFloat(balance.locked || 0) > 0">
-										Bloqueado: ${{ formatMoney(balance.locked) }}
+									<div class="flex items-center justify-center space-x-2 text-white/60">
+										<span class="text-lg font-medium">{{ balance?.currency || 'MXNB' }}</span>
+										<span>•</span>
+										<div class="flex items-center space-x-1">
+											<span
+												class="w-2 h-2 rounded-full"
+												:class="getBalanceStatusColor(balance)"
+											></span>
+											<span class="text-sm">{{ getBalanceStatusText(balance) }}</span>
+										</div>
 									</div>
-									<div>Actualizado: {{ formatLastUpdate(balance.lastUpdated) }}</div>
-								</div>
+									<div class="text-xs text-white/50 mt-2 space-y-1">
+										<div>Total: ${{ formatMoney(balance.total) }}</div>
+										<div v-if="parseFloat(balance.locked || 0) > 0">
+											Bloqueado: ${{ formatMoney(balance.locked) }}
+										</div>
+										<div>Actualizado: {{ formatLastUpdate(balance.lastUpdated) }}</div>
+									</div>
+								</template>
+								<template v-else>
+									<div class="text-center">
+										<img
+											src="/images/dashboard/digital-wallet.png"
+											alt="Digital Wallet"
+											class="w-24 h-24 mx-auto mb-4 opacity-70"
+										/>
+										<div class="text-4xl font-bold text-warning">$0.00</div>
+									</div>
+								</template>
 							</div>
 						</div>
 
@@ -90,6 +90,20 @@
 								<div class="text-2xl font-bold text-accent mb-1">{{ stats.eventsSupported }}</div>
 								<div class="text-white/60 text-sm">Eventos apoyados</div>
 							</div>
+						</div>
+						<div class="mt-6 flex justify-center">
+							<button
+								@click="fundAccount"
+								:disabled="fundingAccount"
+								class="btn-primary px-6 py-3 text-lg font-semibold flex items-center space-x-2"
+							>
+								<Icon
+									name="heroicons:plus-circle-20-solid"
+									class="w-5 h-5"
+									:class="{ 'animate-spin': fundingAccount }"
+								/>
+								<span>{{ fundingAccount ? 'Fondeando...' : 'Fondear $500 MXN' }}</span>
+							</button>
 						</div>
 					</div>
 				</div>
@@ -163,14 +177,13 @@
 		</div>
 	</div>
 </template>
-
 <script setup>
 	definePageMeta({ middleware: 'auth' });
 	const authStore = useAuthStore();
-
 	// --- STATE ---
 	const loadingTransactions = ref(false);
 	const transactions = ref([]);
+	const fundingAccount = ref(false);
 
 	// --- COMPUTED PROPERTIES ---
 	const balance = computed(() => authStore.user?.balance || null);
@@ -203,6 +216,32 @@
 			console.error('Exception cargando transacciones:', e);
 		} finally {
 			loadingTransactions.value = false;
+		}
+	}
+
+	async function fundAccount() {
+		fundingAccount.value = true;
+		try {
+			const { data, error } = await useApiFetch('/users/me/fund', {
+				method: 'POST',
+				body: { amount: 500, currency: 'MXNB' },
+			});
+
+			if(error.value) {
+				console.error('❌ Error fondeando cuenta:', error.value);
+				// Aquí puedes agregar notificación de error
+			} else {
+				console.log('✅ Cuenta fondeada exitosamente');
+				// Refrescar el balance del usuario
+				await authStore.fetchUser();
+				// Refrescar transacciones
+				await fetchTransactions();
+				// Aquí puedes agregar notificación de éxito
+			}
+		} catch(e) {
+			console.error('Exception fondeando cuenta:', e);
+		} finally {
+			fundingAccount.value = false;
 		}
 	}
 

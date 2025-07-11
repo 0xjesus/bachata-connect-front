@@ -136,8 +136,12 @@
 										for="status-select"
 										class="font-semibold text-white"
 									>Gestionar Estado del Evento</label>
-									<div class="flex items-center space-x-4">
-										<select id="status-select" v-model="selectedStatus" class="input-glass flex-1">
+									<div class="flex items-center space-x-4 text-black">
+										<select
+											id="status-select"
+											v-model="selectedStatus"
+											class="input-glass flex-1 text-white/90"
+										>
 											<option value="FUNDING">Financiamiento Activo</option>
 											<option value="CONFIRMED">Confirmado (Meta alcanzada)</option>
 											<option value="CANCELLED">Cancelar Evento</option>
@@ -546,3 +550,11 @@
 		title: pending.value ? 'Cargando...' : `${ event.value?.title || 'Evento no encontrado' } - BachataConnect`,
 	}));
 </script>
+
+<style scoped>
+	/* Aquí puedes agregar estilos específicos para este componente */
+	.input-glass option {
+		color: #111827;
+		background-color: #FFFFFF;
+	}
+</style>

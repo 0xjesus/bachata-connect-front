@@ -46,9 +46,6 @@
 								<Icon name="heroicons:plus-circle-20-solid" />
 								<span>Crear Evento</span>
 							</NuxtLink>
-							<a href="#" class="nav-link group">
-								<Icon name="heroicons:users-20-solid" />
-								<span>Comunidad</span></a>
 						</div>
 					</div>
 
