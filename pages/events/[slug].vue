@@ -62,7 +62,7 @@
 										:disabled="uploadingCover"
 										class="btn-secondary px-6 py-3 rounded-full flex items-center space-x-2 text-lg"
 									>
-										<UiSpinner v-if="uploadingCover" size="sm" class="mr-2" />
+										<GlobalSpinner v-if="uploadingCover" size="sm" class="mr-2" />
 										<Icon v-else name="heroicons:photo-20-solid" class="w-5 h-5" />
 										<span>{{ uploadingCover ? 'Subiendo...' : 'Cambiar Portada' }}</span>
 									</button>
@@ -151,7 +151,7 @@
 											:disabled="statusChangeLoading"
 											class="btn-primary"
 										>
-											<UiSpinner v-if="statusChangeLoading" size="sm" />
+											<GlobalSpinner v-if="statusChangeLoading" size="sm" />
 											<span v-else>Guardar</span>
 										</button>
 									</div>
@@ -171,7 +171,7 @@
 										:disabled="simulatingDeadline || event.status !== 'FUNDING'"
 										class="btn-secondary py-3 bg-orange-600/50 hover:bg-orange-500/50"
 									>
-										<UiSpinner v-if="simulatingDeadline" size="sm" class="mr-2" />
+										<GlobalSpinner v-if="simulatingDeadline" size="sm" class="mr-2" />
 										<span>{{ simulatingDeadline ? 'Simulando...' : 'Simular Deadline Sin Meta' }}</span>
 									</button>
 									<button
@@ -179,7 +179,7 @@
 										:disabled="cancelingEvent || ['CANCELLED', 'COMPLETED'].includes(event.status)"
 										class="btn-secondary py-3 bg-red-600/50 hover:bg-red-500/50"
 									>
-										<UiSpinner v-if="cancelingEvent" size="sm" class="mr-2" />
+										<GlobalSpinner v-if="cancelingEvent" size="sm" class="mr-2" />
 										<span>{{ cancelingEvent ? 'Cancelando...' : 'Cancelar Evento' }}</span>
 									</button>
 								</div>
@@ -317,7 +317,7 @@
 									:disabled="!canJoin || joinLoading || !joinAmount || joinAmount < 10"
 									class="btn-primary w-full py-4 text-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none group"
 								>
-									<UiSpinner v-if="joinLoading" class="animate-spin h-6 w-6 mr-3 text-white" />
+									<GlobalSpinner v-if="joinLoading" class="animate-spin h-6 w-6 mr-3 text-white" />
 									<span
 										v-if="!joinLoading"
 										class="flex items-center justify-center space-x-2"
@@ -382,7 +382,6 @@
 	const route = useRoute();
 	const slug = route.params.slug;
 	const authStore = useAuthStore();
-	const { $toast } = useNuxtApp();
 
 	const fileInput = ref(null);
 	const uploadingCover = ref(false);
@@ -455,10 +454,10 @@
 		formData.append('file', file);
 		try {
 			await useApiFetch(`/events/${ event.value.id }/cover`, { method: 'PUT', body: formData });
-			$toast.success('¡Portada actualizada!');
+			alert('¡Portada actualizada!');
 			await refresh();
 		} catch(err) {
-			$toast.error(err.data?.message || 'Error al subir imagen.');
+			alert(err.data?.message || 'Error al subir imagen.');
 		} finally {
 			uploadingCover.value = false;
 		}
@@ -476,7 +475,7 @@
 				method: 'POST',
 				body: { amount: joinAmount.value },
 			});
-			$toast.success('¡Gracias por tu apoyo!');
+			alert('¡Gracias por tu apoyo!');
 			joinAmount.value = '';
 			await Promise.all([ refresh(), authStore.fetchUser() ]);
 		} catch(err) {
@@ -494,10 +493,10 @@
 		simulatingDeadline.value = true;
 		try {
 			const { data } = await useApiFetch(`/events/${ event.value.id }/simulate-deadline`, { method: 'POST' });
-			$toast.success(data.value?.message || 'Deadline simulado. Evento cancelado y reembolsos procesados.');
+			alert(data.value?.message || 'Deadline simulado. Evento cancelado y reembolsos procesados.');
 			await refresh();
 		} catch(e) {
-			$toast.error(e.data?.message || 'Error simulando deadline.');
+			alert(e.data?.message || 'Error simulando deadline.');
 		} finally {
 			simulatingDeadline.value = false;
 		}
@@ -511,10 +510,10 @@
 		cancelingEvent.value = true;
 		try {
 			await useApiFetch(`/events/${ event.value.id }`, { method: 'DELETE' });
-			$toast.success('Evento cancelado. Reembolsos procesados.');
+			alert('Evento cancelado. Reembolsos procesados.');
 			await refresh();
 		} catch(e) {
-			$toast.error(e.data?.message || 'Error al cancelar evento.');
+			alert(e.data?.message || 'Error al cancelar evento.');
 		} finally {
 			cancelingEvent.value = false;
 		}
@@ -522,7 +521,7 @@
 
 	async function handleStatusChange() {
 		if(selectedStatus.value === event.value.status) {
-			$toast.info('El evento ya está en este estado.');
+			alert('El evento ya está en este estado.');
 			return;
 		}
 		const confirmMessage = selectedStatus.value === 'CANCELLED' ? '¿Seguro que quieres CANCELAR? Los fondos se reembolsarán. Esta acción es irreversible.' : `¿Cambiar estado a ${ selectedStatus.value }?`;
@@ -536,10 +535,10 @@
 				method: 'PUT',
 				body: { status: selectedStatus.value },
 			});
-			$toast.success('¡Estado del evento actualizado!');
+			alert('¡Estado del evento actualizado!');
 			await refresh();
 		} catch(e) {
-			$toast.error(e.data?.message || 'No se pudo cambiar el estado.');
+			alert(e.data?.message || 'No se pudo cambiar el estado.');
 			selectedStatus.value = event.value.status;
 		} finally {
 			statusChangeLoading.value = false;

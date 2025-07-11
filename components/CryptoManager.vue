@@ -6,11 +6,11 @@
 				:key="tab.id"
 				@click="activeTab = tab.id"
 				:class="[
-          'flex items-center space-x-2 px-3 sm:px-4 py-3 text-sm sm:text-base font-bold transition-all duration-300',
-          activeTab === tab.id
-            ? 'border-b-2 border-primary text-primary'
-            : 'text-white/60 hover:text-white hover:bg-white/5 rounded-t-lg',
-        ]"
+     'flex items-center space-x-2 px-3 sm:px-4 py-3 text-sm sm:text-base font-bold transition-all duration-300',
+     activeTab === tab.id
+      ? 'border-b-2 border-primary text-primary'
+      : 'text-white/60 hover:text-white hover:bg-white/5 rounded-t-lg',
+    ]"
 			>
 				<Icon :name="tab.icon" class="w-5 h-5" />
 				<span>{{ tab.name }}</span>
@@ -31,7 +31,7 @@
 					<h4 class="text-lg font-bold text-white mb-2">Aún no tienes una wallet</h4>
 					<p class="text-white/70 mb-6">Genera una wallet segura para poder recibir pagos de tus eventos.</p>
 					<button @click="handleGenerateWallet" :disabled="isGeneratingWallet" class="btn-primary px-6 py-3">
-						<UiSpinner v-if="isGeneratingWallet" size="sm" class="mr-2" />
+						<GlobalSpinner v-if="isGeneratingWallet" size="sm" class="mr-2" />
 						<span>{{ isGeneratingWallet ? 'Generando...' : 'Generar Mi Wallet Segura' }}</span>
 					</button>
 				</div>
@@ -63,7 +63,7 @@
 									:disabled="isFetchingPrivateKey"
 									class="btn-secondary bg-error/20 hover:bg-error/30 text-white px-4 py-2"
 								>
-									<UiSpinner v-if="isFetchingPrivateKey" size="sm" class="mr-2" />
+									<GlobalSpinner v-if="isFetchingPrivateKey" size="sm" class="mr-2" />
 									<span>{{ isFetchingPrivateKey ? 'Obteniendo...' : 'Revelar Clave Privada' }}</span>
 								</button>
 							</div>
@@ -81,7 +81,7 @@
 				</div>
 
 				<div v-else-if="isGeneratingWallet">
-					<UiSpinner center size="lg" label="Generando tu wallet..." />
+					<GlobalSpinner center size="lg" label="Generando tu wallet..." />
 				</div>
 			</section>
 
@@ -92,48 +92,48 @@
 				</h3>
 				<form @submit.prevent="handleWithdraw" class="space-y-6">
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div>
-       <label
-          for="address"
-          class="block text-sm font-semibold text-white/90 mb-2"
-       >Dirección de Destino</label>
-       <select
-          id="address"
-          v-model="withdrawalRequest.addressId"
-          class="input-glass"
-          :disabled="addresses.length === 0"
-       >
-          <option
-             :value="null"
-             disabled
-          >{{ addresses.length > 0 ? 'Selecciona una dirección' : 'Añade una dirección primero' }}</option>
-          <option
-             v-for="addr in addresses"
-             :key="addr.id"
-             :value="addr.id"
-          >{{ addr.label }} ({{ addr.address.slice(0, 6) }}...{{ addr.address.slice(-4) }})</option>
-       </select>
-    </div>
-    <div>
-       <label
-          for="amount"
-          class="block text-sm font-semibold text-white/90 mb-2"
-       >Monto a Retirar</label>
-       <div class="relative">
-          <input
-             id="amount"
-             v-model.number="withdrawalRequest.amount"
-             type="number"
-             placeholder="0.00"
-             required
-             min="1"
-             step="any"
-             class="input-glass pl-4 pr-16"
-          />
-          <span class="absolute inset-y-0 right-4 flex items-center text-white/60 font-bold">MXNB</span>
-       </div>
-    </div>
-</div>
+						<div>
+							<label
+								for="address"
+								class="block text-sm font-semibold text-white/90 mb-2"
+							>Dirección de Destino</label>
+							<select
+								id="address"
+								v-model="withdrawalRequest.addressId"
+								class="input-glass"
+								:disabled="addresses.length === 0"
+							>
+								<option
+									:value="null"
+									disabled
+								>{{ addresses.length > 0 ? 'Selecciona una dirección' : 'Añade una dirección primero' }}</option>
+								<option
+									v-for="addr in addresses"
+									:key="addr.id"
+									:value="addr.id"
+								>{{ addr.label }} ({{ addr.address.slice(0, 6) }}...{{ addr.address.slice(-4) }})</option>
+							</select>
+						</div>
+						<div>
+							<label
+								for="amount"
+								class="block text-sm font-semibold text-white/90 mb-2"
+							>Monto a Retirar</label>
+							<div class="relative">
+								<input
+									id="amount"
+									v-model.number="withdrawalRequest.amount"
+									type="number"
+									placeholder="0.00"
+									required
+									min="1"
+									step="any"
+									class="input-glass pl-4 pr-16"
+								/>
+								<span class="absolute inset-y-0 right-4 flex items-center text-white/60 font-bold">MXNB</span>
+							</div>
+						</div>
+					</div>
 					<div class="card-glass p-4 rounded-xl space-y-4">
 						<div class="flex justify-between items-center text-sm">
 							<span class="text-white/70">Tu Saldo Disponible:</span>
@@ -152,7 +152,7 @@
 						</div>
 					</div>
 					<button type="submit" :disabled="isSubmittingWithdrawal" class="btn-primary w-full py-3">
-						<UiSpinner v-if="isSubmittingWithdrawal" size="sm" class="mr-2" />
+						<GlobalSpinner v-if="isSubmittingWithdrawal" size="sm" class="mr-2" />
 						<span>{{ isSubmittingWithdrawal ? 'Procesando Retiro...' : 'Confirmar Retiro' }}</span>
 					</button>
 					<p v-if="successMessage" class="text-center text-success font-medium">{{ successMessage }}</p>
@@ -170,7 +170,7 @@
 						v-if="addresses.length === 0 && !loadingAddresses"
 						class="text-center text-white/60 py-4"
 					>No tienes direcciones guardadas.</p>
-					<UiSpinner v-if="loadingAddresses" center />
+					<GlobalSpinner v-if="loadingAddresses" center />
 					<transition-group name="list" tag="div" class="space-y-3">
 						<div
 							v-for="addr in addresses"
@@ -213,7 +213,7 @@
 							/>
 						</div>
 						<button type="submit" :disabled="isAddingAddress" class="btn-secondary py-2 px-4">
-							<UiSpinner v-if="isAddingAddress" size="xs" class="mr-2" />
+							<GlobalSpinner v-if="isAddingAddress" size="xs" class="mr-2" />
 							{{ isAddingAddress ? 'Guardando...' : 'Añadir Dirección' }}
 						</button>
 					</form>
@@ -225,7 +225,7 @@
 					<Icon name="heroicons:clock-20-solid" class="text-primary" />
 					<span>Historial de Retiros</span>
 				</h3>
-				<UiSpinner v-if="loadingWithdrawals" center />
+				<GlobalSpinner v-if="loadingWithdrawals" center />
 				<p
 					v-if="withdrawals.length === 0 && !loadingWithdrawals"
 					class="text-center text-white/60 py-4"
@@ -270,7 +270,6 @@
 	import { useAuthStore } from '#imports';
 
 	const authStore = useAuthStore();
-	const { $toast } = useNuxtApp();
 	const activeTab = ref('wallet');
 
 	const tabs = [
@@ -318,35 +317,45 @@
 		}
 	}
 
-	async function handleAddAddress() {
-		isAddingAddress.value = true;
-		clearMessages();
-		try {
-			await useApiFetch('/crypto/addresses', {
-				method: 'POST',
-				body: { ...newAddress.value, blockchain: 'ARBITRUM' },
-			});
-			newAddress.value = { label: '', address: '' };
-			$toast.success('Dirección añadida con éxito');
-			await fetchAddresses();
-		} catch(e) {
-			errorMessage.value = e.data?.message || 'Error al añadir dirección.';
-			$toast.error(errorMessage.value);
-		} finally {
-			isAddingAddress.value = false;
-		}
-	}
+	 async function handleAddAddress() {
+        isAddingAddress.value = true;
+        clearMessages();
+        try {
+            const { data: newAddressData, error } = await useApiFetch('/crypto/addresses', {
+                method: 'POST',
+                body: { ...newAddress.value, blockchain: 'ARBITRUM' },
+            });
+
+            if (error.value) {
+                throw error.value;
+            }
+
+            newAddress.value = { label: '', address: '' };
+            alert('Dirección añadida con éxito');
+            await fetchAddresses();
+
+            if (newAddressData.value?.data?.id) {
+                withdrawalRequest.value.addressId = newAddressData.value.data.id;
+            }
+        } catch (e) {
+            const message = e.data?.message || e.message || 'Error al añadir dirección.';
+            errorMessage.value = message;
+            alert(`Error: ${message}`);
+        } finally {
+            isAddingAddress.value = false;
+        }
+    }
 
 	async function handleDeleteAddress(addressId) {
 		if(!confirm('¿Estás seguro de que quieres eliminar esta dirección?')) return;
 		clearMessages();
 		try {
 			await useApiFetch(`/crypto/addresses/${ addressId }`, { method: 'DELETE' });
-			$toast.info('Dirección eliminada');
+			alert('Dirección eliminada');
 			addresses.value = addresses.value.filter(a => a.id !== addressId);
 		} catch(e) {
 			errorMessage.value = e.data?.message || 'Error al eliminar dirección.';
-			$toast.error(errorMessage.value);
+			alert(errorMessage.value);
 		}
 	}
 
@@ -363,13 +372,13 @@
 				body: { ...withdrawalRequest.value, blockchain: 'ARBITRUM' },
 			});
 			successMessage.value = data.value?.message || 'Retiro procesado exitosamente.';
-			$toast.success(successMessage.value);
+			alert(successMessage.value);
 			withdrawalRequest.value = { addressId: null, amount: '' };
 			await authStore.fetchUser();
 			await fetchWithdrawals();
 		} catch(e) {
 			errorMessage.value = e.data?.message || 'Ocurrió un error al procesar el retiro.';
-			$toast.error(errorMessage.value);
+			alert(errorMessage.value);
 		} finally {
 			isSubmittingWithdrawal.value = false;
 		}
@@ -380,9 +389,9 @@
 		try {
 			await useApiFetch('/users/me/wallet', { method: 'POST' });
 			await authStore.fetchUser();
-			$toast.success('¡Tu wallet ha sido generada con éxito!');
+			alert('¡Tu wallet ha sido generada con éxito!');
 		} catch(e) {
-			$toast.error(e.data?.message || 'No se pudo generar la wallet.');
+			alert(e.data?.message || 'No se pudo generar la wallet.');
 		} finally {
 			isGeneratingWallet.value = false;
 		}
@@ -395,7 +404,7 @@
 			privateKey.value = data.value?.data?.privateKey;
 			showPrivateKey.value = true;
 		} catch(e) {
-			$toast.error(e.data?.message || 'No se pudo obtener la clave privada.');
+			alert(e.data?.message || 'No se pudo obtener la clave privada.');
 		} finally {
 			isFetchingPrivateKey.value = false;
 		}
@@ -403,7 +412,7 @@
 
 	function copyToClipboard(text, message = 'Copiado al portapapeles') {
 		navigator.clipboard.writeText(text).then(() => {
-			$toast.info(message);
+			alert(message);
 		});
 	}
 
@@ -454,25 +463,19 @@
 </script>
 
 <style scoped>
-	.list-enter-active, .list-leave-active {
+	select.input-glass option {
+		color: black;
+		background-color: white;
+	}
+
+	.list-enter-active,
+	.list-leave-active {
 		transition: all 0.5s ease;
 	}
 
-	.list-enter-from, .list-leave-to {
+	.list-enter-from,
+	.list-leave-to {
 		opacity: 0;
 		transform: translateX(30px);
 	}
-	select.input-glass option {
-        color: black;
-        background-color: white;
-    }
-
-    .list-enter-active, .list-leave-active {
-        transition: all 0.5s ease;
-    }
-
-    .list-enter-from, .list-leave-to {
-        opacity: 0;
-        transform: translateX(30px);
-    }
 </style>

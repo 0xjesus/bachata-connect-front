@@ -133,7 +133,7 @@
 					</div>
 
 					<div v-if="loadingTransactions" class="text-center py-12">
-						<UiSpinner variant="dance" size="lg" center />
+						<GlobalSpinner variant="dance" size="lg" center />
 					</div>
 					<div v-else-if="transactions.length > 0" class="space-y-4">
 						<div

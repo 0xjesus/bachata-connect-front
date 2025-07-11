@@ -18,7 +18,7 @@
                     :disabled="loading || !content.trim()"
                     class="btn-primary px-6 py-2"
                 >
-                    <UiSpinner v-if="loading" size="sm" class="mr-2"/>
+                    <GlobalSpinner v-if="loading" size="sm" class="mr-2"/>
                     <span>{{ loading ? 'Publicando...' : 'Publicar Actualización' }}</span>
                 </button>
             </div>
@@ -36,7 +36,6 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update-posted']);
-const { $toast } = useNuxtApp();
 
 const content = ref('');
 const loading = ref(false);
@@ -59,27 +58,18 @@ async function submitUpdate() {
 
         console.log('[SUBMIT UPDATE] ✅ La llamada a la API fue exitosa.');
 
-        // --- INICIO CORRECCIÓN #2: COMPROBACIÓN DE $toast ---
-        // Verificamos que el plugin de notificaciones exista antes de usarlo.
-        if ($toast && typeof $toast.success === 'function') {
-            $toast.success('¡Actualización publicada!');
-        } else {
-            console.warn('[SUBMIT UPDATE] El plugin $toast no está disponible. No se mostró notificación de éxito.');
+
             alert('¡Actualización publicada!'); // Fallback a un alert simple.
-        }
+
 
         content.value = '';
         emit('update-posted');
 
     } catch (e) {
         console.error('[SUBMIT UPDATE] 🔥 ERROR CAPTURADO EN CATCH:', e);
-        // Hacemos la misma comprobación para el toast de error.
-        if ($toast && typeof $toast.error === 'function') {
-            $toast.error(e.message || 'No se pudo publicar la actualización.');
-        } else {
-             console.warn('[SUBMIT UPDATE] El plugin $toast no está disponible. No se mostró notificación de error.');
+
              alert(`Error: ${e.message || 'No se pudo publicar la actualización.'}`);
-        }
+
     } finally {
         loading.value = false;
         console.log('[SUBMIT UPDATE] 🏁 Función finalizada.');

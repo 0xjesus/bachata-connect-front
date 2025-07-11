@@ -3,6 +3,7 @@ export default defineNuxtConfig({
 	compatibilityDate: '2025-05-15',
 	devtools: { enabled: true },
 	css: [ '~/assets/css/main.css' ],
+	ssr: false,
 
 	modules: [
 		'@nuxt/fonts',
@@ -16,7 +17,6 @@ export default defineNuxtConfig({
 	components: [
 		{
 			path: '~/components/ui',
-			pathPrefix: false
 		},
 		{
 			path: '~/components/global',

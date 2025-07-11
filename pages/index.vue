@@ -21,7 +21,7 @@
 		</div>
 
 		<div v-if="pending" class="flex justify-center items-center h-64">
-			<UiSpinner class="w-12 h-12 text-primary" />
+			<GlobalSpinner class="w-12 h-12 text-primary" />
 		</div>
 
 		<div v-else-if="error" class="text-center text-red-500 bg-red-100 p-4 rounded-lg">

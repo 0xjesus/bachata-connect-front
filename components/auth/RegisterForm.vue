@@ -411,7 +411,6 @@
 <script setup>
 	const authStore = useAuthStore();
 	const router = useRouter(); // 👈 AGREGAMOS ESTO
-	const { $toast } = useNuxtApp(); // 👈 Y ESTO PARA TOASTS
 
 	const userInfo = ref({ nicename: '', email: '', password: '', passwordConfirm: '' });
 	const loading = ref(false);
@@ -486,7 +485,7 @@
 			console.log('✅ Login automático exitoso:', loginResponse);
 
 			// 3. Mostrar mensaje de éxito
-			$toast.success('¡Cuenta creada y sesión iniciada! ¡Bienvenido a BachataConnect! 🎉');
+			alert('¡Cuenta creada y sesión iniciada! ¡Bienvenido a BachataConnect! 🎉');
 
 			// 4. Redireccionar al dashboard
 			await router.push('/dashboard');
