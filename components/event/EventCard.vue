@@ -212,7 +212,7 @@
 		} else if(titleLower.includes('competencia')) {
 			return '/images/events/competition-default.png';
 		} else {
-			return '/images/events/general-default.jpg';
+			return '/images/events/general-default.png';
 		}
 	}
 </script>

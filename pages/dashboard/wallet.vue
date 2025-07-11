@@ -201,19 +201,31 @@
 	});
 
 	// --- METHODS ---
+	// pages/dashboard/wallet.vue -> dentro del <script setup>
+
 	async function fetchTransactions() {
+		// --- INICIO DE LA CORRECCIÓN ---
+		// Si ya estamos cargando transacciones, no hacemos nada y salimos de la función.
+		if(loadingTransactions.value) return;
+		// --- FIN DE LA CORRECCIÓN ---
+
 		if(!authStore.user) return;
 		loadingTransactions.value = true;
 		try {
 			const { data, error } = await useApiFetch('/users/me/transactions');
 			if(error.value) {
-				console.error('❌ Error cargando transacciones:', error.value);
+				// No mostramos el error de abortar, ya que es un comportamiento esperado
+				if(error.value.name !== 'AbortError') {
+					console.error('❌ Error cargando transacciones:', error.value);
+				}
 				transactions.value = [];
 			} else {
 				transactions.value = data.value?.data?.data || [];
 			}
 		} catch(e) {
-			console.error('Exception cargando transacciones:', e);
+			if(e.name !== 'AbortError') {
+				console.error('Exception cargando transacciones:', e);
+			}
 		} finally {
 			loadingTransactions.value = false;
 		}
@@ -329,9 +341,7 @@
 
 	// --- LIFECYCLE ---
 	onMounted(() => {
-		if(authStore.isAuthenticated) {
-			fetchTransactions();
-		}
+
 	});
 
 	watch(() => authStore.user, (newUser) => {

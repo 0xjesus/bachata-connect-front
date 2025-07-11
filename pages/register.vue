@@ -26,7 +26,7 @@
 		</div>
 
 		<!-- Main Content -->
-		<div class="relative z-10 flex items-center justify-center min-h-screen p-4">
+		<div class="relative z-10 flex items-center justify-center min-h-screen p-4  ">
 			<div class="w-full max-w-lg">
 				<!-- 🎨 LOGO CHINGÓN EN LUGAR DEL ÍCONO -->
 				<div class="text-center mb-8 animate-fade-in-up">

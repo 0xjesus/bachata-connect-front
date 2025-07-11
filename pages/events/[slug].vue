@@ -374,49 +374,41 @@
 </template>
 
 <script setup>
-	import { ref, computed, watch } from 'vue';
+	import { ref, computed, watch, watchEffect } from 'vue';
 	import { useRoute } from 'vue-router';
 	import { useAuthStore } from '#imports';
-	import { useNuxtApp } from '#app';
+
+	definePageMeta({ middleware: 'auth' });
 
 	const route = useRoute();
 	const slug = route.params.slug;
 	const authStore = useAuthStore();
 
+	// --- State refs ---
 	const fileInput = ref(null);
 	const uploadingCover = ref(false);
 	const uploadError = ref('');
 	const joinAmount = ref('');
 	const joinLoading = ref(false);
 	const joinError = ref('');
-
 	const simulatingDeadline = ref(false);
 	const cancelingEvent = ref(false);
 	const statusChangeLoading = ref(false);
 	const selectedStatus = ref('');
-
+	const payoutLoading = ref(false);
+	let payoutTriggered = false;
 	const quickAmounts = [ 50, 100, 250 ];
 
+	// --- Data Fetching ---
 	const { data: response, pending, error, refresh } = await useApiFetch(`/events/${ slug }/public`);
 
+	// --- Computed Properties ---
 	const event = computed(() => response.value?.data || null);
-
-	watch(event, (newEvent) => {
-		if(newEvent) {
-			selectedStatus.value = newEvent.status;
-		}
-	}, { immediate: true });
-
-	const coverImageUrl = computed(() => event.value?.idCoverImage ? `/api/users/${ event.value.idCoverImage }/avatar` : `https://ui-avatars.com/api/?name=${ encodeURIComponent(event.value?.title || 'E') }&size=1200&background=1a202c&color=fff&bold=true`);
 	const isHost = computed(() => authStore.isAuthenticated && event.value?.host?.id === authStore.user?.id);
+	const coverImageUrl = computed(() => event.value?.coverImage?.url || `https://ui-avatars.com/api/?name=${ encodeURIComponent(event.value?.title || 'E') }&size=1200&background=1a202c&color=fff&bold=true`);
 	const progressPercentage = computed(() => (!event.value || !event.value.targetAmount || +event.value.targetAmount === 0) ? 0 : Math.min((+event.value.currentAmount / +event.value.targetAmount) * 100, 100));
 	const canJoin = computed(() => event.value?.status === 'FUNDING' && authStore.isAuthenticated && !isHost.value);
-	const joinButtonText = computed(() => {
-		if(isHost.value) return 'Eres el organizador';
-		if(!authStore.isAuthenticated) return 'Inicia sesión para aportar';
-		if(event.value?.status !== 'FUNDING') return `Evento ${ statusText.value }`;
-		return '¡Apoyar este evento!';
-	});
+
 	const statusText = computed(() => {
 		const map = {
 			'FUNDING': 'Financiamiento Activo',
@@ -426,16 +418,27 @@
 		};
 		return map[event.value?.status] || 'Activo';
 	});
+
+	const joinButtonText = computed(() => {
+		if(isHost.value) return 'Eres el organizador';
+		if(!authStore.isAuthenticated) return 'Inicia sesión para aportar';
+		if(payoutLoading.value) return 'Liberando fondos...';
+		if(event.value?.status !== 'FUNDING') return `Evento ${ statusText.value }`;
+		return '¡Apoyar este evento!';
+	});
+
 	const statusBadgeClass = computed(() => {
 		const map = {
 			'FUNDING': 'text-primary bg-primary/20',
-			'CONFIRMED': 'text-success bg-success/20',
+			'CONFIRMED': 'text-success bg-success/20 animate-pulse',
 			'COMPLETED': 'text-gray-400 bg-gray-600/20',
 			'CANCELLED': 'text-error bg-error/20',
 		};
 		return map[event.value?.status] || 'text-primary bg-primary/20';
 	});
+
 	const participantCount = computed(() => event.value?.participants?.length || 0);
+
 	const daysLeft = computed(() => {
 		if(!event.value?.fundingDeadline) return '--';
 		const deadline = new Date(event.value.fundingDeadline);
@@ -443,6 +446,73 @@
 		const diffDays = Math.ceil((deadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
 		return diffDays > 0 ? diffDays : 0;
 	});
+
+	// --- INICIO DE LA CORRECCIÓN CON LOGS ---
+	// pages/events/[slug].vue -> Dentro de <script setup>
+
+	watchEffect(() => {
+		// Mantendremos los logs por ahora para confirmar la solución
+		console.log('--- 🕵️‍♂️ WATCHEFFECT CHECK ---');
+		console.log(`1. ¿Evento cargado?: ${ !!event.value }`);
+		console.log(`2. ¿Usuario autenticado?: ${ authStore.isAuthenticated }`);
+		console.log(`3. ¿Usuario cargado?: ${ !!authStore.user }`);
+		console.log(`4. ¿Pago ya disparado?: ${ payoutTriggered }`);
+
+		if(event.value && authStore.user) {
+			const goalReached = parseFloat(event.value.currentAmount) >= parseFloat(event.value.targetAmount);
+
+			console.log(`5. ¿El usuario es el Host?: ${ isHost.value }`);
+			console.log(`   - ID del Host del Evento: ${ event.value.host?.id }`);
+			console.log(`   - ID del Usuario Logueado: ${ authStore.user?.id }`);
+			console.log(`6. ¿Estado del Evento es 'CONFIRMED'?: ${ event.value.status === 'CONFIRMED' }`);
+			console.log(`   - Estado Actual: ${ event.value.status }`);
+			console.log(`7. ¿Meta de fondos alcanzada?: ${ goalReached }`);
+			console.log(`   - Actual: ${ event.value.currentAmount }, Meta: ${ event.value.targetAmount }`);
+
+			// --- INICIO DE LA CORRECCIÓN LÓGICA ---
+			const canTriggerPayout = event.value.status === 'CONFIRMED' || (event.value.status === 'FUNDING' && goalReached);
+
+			if(!payoutTriggered && isHost.value && canTriggerPayout) {
+				console.log('✅ ¡CONDICIONES CUMPLIDAS! Disparando pago...');
+				payoutTriggered = true;
+				triggerPayout();
+			} else {
+				console.log('--- ❌ CONDICIONES NO CUMPLIDAS ---');
+			}
+			// --- FIN DE LA CORRECCIÓN LÓGICA ---
+
+		} else {
+			console.log('Faltan datos de Evento o Usuario para continuar la verificación.');
+		}
+	});
+
+	// Watch para actualizar el <select> del estado (esto es correcto y se mantiene)
+	watch(event, (newEvent) => {
+		if(newEvent) {
+			selectedStatus.value = newEvent.status;
+		}
+	}, { immediate: true, deep: true });
+
+	// --- Methods ---
+	async function triggerPayout() {
+		if(!isHost.value) return;
+		payoutLoading.value = true;
+		alert('¡Meta alcanzada! Iniciando la liberación de fondos a tu wallet...');
+		try {
+			await useApiFetch(`/events/${ event.value.id }/payout`, { method: 'POST' });
+			alert('✅ ¡Fondos en camino! El estado de tu evento se ha actualizado a "Completado".');
+			await Promise.all([
+				refresh(), // 1. Refresca los datos del evento (ahora estará 'COMPLETED').
+				authStore.fetchUser(), // 2. Refresca los datos del usuario (¡incluyendo el nuevo balance!).
+			]);
+			await refresh();
+
+		} catch(e) {
+			alert(`Error al procesar el pago: ${ e.data?.message || e.message }`);
+		} finally {
+			payoutLoading.value = false;
+		}
+	}
 
 	function triggerFileInput() { fileInput.value?.click(); }
 
@@ -486,10 +556,7 @@
 	}
 
 	async function simulateDeadlineReached() {
-		if(!confirm('¿Simular que llegó el deadline sin cumplir la meta? Esto disparará reembolsos automáticamente.')) {
-			return;
-		}
-
+		if(!confirm('¿Simular que llegó el deadline sin cumplir la meta? Esto disparará reembolsos automáticamente.')) return;
 		simulatingDeadline.value = true;
 		try {
 			const { data } = await useApiFetch(`/events/${ event.value.id }/simulate-deadline`, { method: 'POST' });
@@ -503,10 +570,7 @@
 	}
 
 	async function handleCancelEvent() {
-		if(!confirm('¿Estás seguro de que quieres CANCELAR este evento? Se reembolsará a todos los participantes. Esta acción es irreversible.')) {
-			return;
-		}
-
+		if(!confirm('¿Estás seguro de que quieres CANCELAR este evento? Se reembolsará a todos los participantes. Esta acción es irreversible.')) return;
 		cancelingEvent.value = true;
 		try {
 			await useApiFetch(`/events/${ event.value.id }`, { method: 'DELETE' });
@@ -524,7 +588,7 @@
 			alert('El evento ya está en este estado.');
 			return;
 		}
-		const confirmMessage = selectedStatus.value === 'CANCELLED' ? '¿Seguro que quieres CANCELAR? Los fondos se reembolsarán. Esta acción es irreversible.' : `¿Cambiar estado a ${ selectedStatus.value }?`;
+		const confirmMessage = selectedStatus.value === 'CANCELLED' ? '¿Seguro que quieres CANCELAR? Los fondos se reembolsarán.' : `¿Cambiar estado a ${ selectedStatus.value }?`;
 		if(!confirm(confirmMessage)) {
 			selectedStatus.value = event.value.status;
 			return;
@@ -549,7 +613,6 @@
 		title: pending.value ? 'Cargando...' : `${ event.value?.title || 'Evento no encontrado' } - BachataConnect`,
 	}));
 </script>
-
 <style scoped>
 	/* Aquí puedes agregar estilos específicos para este componente */
 	.input-glass option {

@@ -139,16 +139,12 @@
 							<span class="text-white/70">Tu Saldo Disponible:</span>
 							<span class="font-bold text-primary">{{ formatMoney(authStore.user?.balance?.available || 0) }} MXNB</span>
 						</div>
-						<div v-if="withdrawalRequest.amount > 0" class="flex justify-between items-center text-sm">
-							<span class="text-white/70">Comisión (aprox):</span>
-							<span class="font-bold text-white/90">0.50 MXNB</span>
-						</div>
 						<div
 							v-if="withdrawalRequest.amount > 0"
 							class="flex justify-between items-center font-bold text-lg pt-2 border-t border-white/10"
 						>
-							<span class="text-white">Recibirás (aprox):</span>
-							<span class="text-success">{{ formatMoney(withdrawalRequest.amount - 0.5) }} MXNB</span>
+							<span class="text-white">Recibirás:</span>
+							<span class="text-success">{{ formatMoney(withdrawalRequest.amount) }} MXNB</span>
 						</div>
 					</div>
 					<button type="submit" :disabled="isSubmittingWithdrawal" class="btn-primary w-full py-3">
