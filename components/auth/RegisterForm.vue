@@ -411,7 +411,7 @@
 <script setup>
 	const authStore = useAuthStore();
 	const router = useRouter(); // 👈 AGREGAMOS ESTO
-
+	const { addNotification } = useNotifications();
 	const userInfo = ref({ nicename: '', email: '', password: '', passwordConfirm: '' });
 	const loading = ref(false);
 	const error = ref('');
@@ -485,7 +485,10 @@
 			console.log('✅ Login automático exitoso:', loginResponse);
 
 			// 3. Mostrar mensaje de éxito
-			alert('¡Cuenta creada y sesión iniciada! ¡Bienvenido a BachataConnect! 🎉');
+			addNotification({
+				type: 'success',
+				message: 'Cuenta creada y sesión iniciada exitosamente.',
+			});
 
 			// 4. Redireccionar al dashboard
 			await router.push('/dashboard');

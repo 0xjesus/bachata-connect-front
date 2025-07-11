@@ -264,7 +264,8 @@
 
 <script setup>
 	import { useAuthStore } from '#imports';
-
+	const { addNotification } = useNotifications();
+	const confirm = useConfirmation();
 	const authStore = useAuthStore();
 	const activeTab = ref('wallet');
 
@@ -313,45 +314,68 @@
 		}
 	}
 
-	 async function handleAddAddress() {
-        isAddingAddress.value = true;
-        clearMessages();
-        try {
-            const { data: newAddressData, error } = await useApiFetch('/crypto/addresses', {
-                method: 'POST',
-                body: { ...newAddress.value, blockchain: 'ARBITRUM' },
-            });
+	async function handleAddAddress() {
+		isAddingAddress.value = true;
+		clearMessages();
+		try {
+			const { data: newAddressData, error } = await useApiFetch('/crypto/addresses', {
+				method: 'POST',
+				body: { ...newAddress.value, blockchain: 'ARBITRUM' },
+			});
 
-            if (error.value) {
-                throw error.value;
-            }
+			if(error.value) {
+				throw error.value;
+			}
 
-            newAddress.value = { label: '', address: '' };
-            alert('Dirección añadida con éxito');
-            await fetchAddresses();
+			newAddress.value = { label: '', address: '' };
+			addNotification({
+				type: 'success',
+				message: 'Dirección añadida con éxito',
+			});
+			await fetchAddresses();
 
-            if (newAddressData.value?.data?.id) {
-                withdrawalRequest.value.addressId = newAddressData.value.data.id;
-            }
-        } catch (e) {
-            const message = e.data?.message || e.message || 'Error al añadir dirección.';
-            errorMessage.value = message;
-            alert(`Error: ${message}`);
-        } finally {
-            isAddingAddress.value = false;
-        }
-    }
+			if(newAddressData.value?.data?.id) {
+				withdrawalRequest.value.addressId = newAddressData.value.data.id;
+			}
+		} catch(e) {
+			const message = e.data?.message || e.message || 'Error al añadir dirección.';
+			errorMessage.value = message;
+			addNotification({
+				type: 'error',
+				message: message,
+			});
+
+		} finally {
+			isAddingAddress.value = false;
+		}
+	}
 
 	async function handleDeleteAddress(addressId) {
-		if(!confirm('¿Estás seguro de que quieres eliminar esta dirección?')) return;
+		const confirmed = await confirm.show({
+			title: 'Confirmar Eliminación',
+			message: '¿Estás seguro de que quieres eliminar esta dirección? Esta acción no se puede deshacer.',
+				options: {
+					confirmText: 'Sí, Eliminar',
+					cancelText: 'No, Conservar',
+				},
+		});
+
+		// Si el usuario no confirmó, la función se detiene aquí.
+		if(!confirmed) return;
 		clearMessages();
 		try {
 			await useApiFetch(`/crypto/addresses/${ addressId }`, { method: 'DELETE' });
-			alert('Dirección eliminada');
+			addNotification({
+				type: 'success',
+				message: 'Dirección eliminada con éxito',
+			});
 			addresses.value = addresses.value.filter(a => a.id !== addressId);
 		} catch(e) {
 			errorMessage.value = e.data?.message || 'Error al eliminar dirección.';
-			alert(errorMessage.value);
+			addNotification({
+				type: 'error',
+				message: errorMessage.value,
+			});
 		}
 	}
 
@@ -368,13 +392,19 @@
 				body: { ...withdrawalRequest.value, blockchain: 'ARBITRUM' },
 			});
 			successMessage.value = data.value?.message || 'Retiro procesado exitosamente.';
-			alert(successMessage.value);
+			addNotification({
+				type: 'success',
+				message: successMessage.value,
+			});
 			withdrawalRequest.value = { addressId: null, amount: '' };
 			await authStore.fetchUser();
 			await fetchWithdrawals();
 		} catch(e) {
 			errorMessage.value = e.data?.message || 'Ocurrió un error al procesar el retiro.';
-			alert(errorMessage.value);
+			addNotification({
+				type: 'error',
+				message: errorMessage.value,
+			});
 		} finally {
 			isSubmittingWithdrawal.value = false;
 		}
@@ -385,9 +415,15 @@
 		try {
 			await useApiFetch('/users/me/wallet', { method: 'POST' });
 			await authStore.fetchUser();
-			alert('¡Tu wallet ha sido generada con éxito!');
+			addNotification({
+				type: 'success',
+				message: 'Wallet generada exitosamente. Ahora puedes recibir pagos.',
+			});
 		} catch(e) {
-			alert(e.data?.message || 'No se pudo generar la wallet.');
+			addNotification({
+				type: 'error',
+				message: e.data?.message || 'Error al generar la wallet.',
+			});
 		} finally {
 			isGeneratingWallet.value = false;
 		}
@@ -400,7 +436,10 @@
 			privateKey.value = data.value?.data?.privateKey;
 			showPrivateKey.value = true;
 		} catch(e) {
-			alert(e.data?.message || 'No se pudo obtener la clave privada.');
+			addNotification({
+				type: 'error',
+				message: e.data?.message || 'Error al obtener la clave privada.',
+			});
 		} finally {
 			isFetchingPrivateKey.value = false;
 		}
@@ -408,7 +447,10 @@
 
 	function copyToClipboard(text, message = 'Copiado al portapapeles') {
 		navigator.clipboard.writeText(text).then(() => {
-			alert(message);
+			addNotification({
+				type: 'success',
+				message: message,
+			});
 		});
 	}
 

@@ -374,12 +374,9 @@
 </template>
 
 <script setup>
-	import { ref, computed, watch, watchEffect } from 'vue';
-	import { useRoute } from 'vue-router';
-	import { useAuthStore } from '#imports';
-
+	const { addNotification } = useNotifications();
 	definePageMeta({ middleware: 'auth' });
-
+	const { show: showConfirmationDialog } = useConfirmation();
 	const route = useRoute();
 	const slug = route.params.slug;
 	const authStore = useAuthStore();
@@ -497,10 +494,16 @@
 	async function triggerPayout() {
 		if(!isHost.value) return;
 		payoutLoading.value = true;
-		alert('¡Meta alcanzada! Iniciando la liberación de fondos a tu wallet...');
+		addNotification({
+			type: 'success',
+			message: '¡Meta alcanzada! Iniciando la liberación de fondos a tu wallet...',
+		})
 		try {
 			await useApiFetch(`/events/${ event.value.id }/payout`, { method: 'POST' });
-			alert('✅ ¡Fondos en camino! El estado de tu evento se ha actualizado a "Completado".');
+			addNotification({
+				type: 'success',
+				message: 'Fondos liberados exitosamente. ¡Gracias por organizar este evento!',
+			})
 			await Promise.all([
 				refresh(), // 1. Refresca los datos del evento (ahora estará 'COMPLETED').
 				authStore.fetchUser(), // 2. Refresca los datos del usuario (¡incluyendo el nuevo balance!).
@@ -508,7 +511,10 @@
 			await refresh();
 
 		} catch(e) {
-			alert(`Error al procesar el pago: ${ e.data?.message || e.message }`);
+			addNotification({
+				type: 'error',
+				message: `Error al procesar el pago: ${ e.data?.message || e.message }`,
+			})
 		} finally {
 			payoutLoading.value = false;
 		}
@@ -524,10 +530,17 @@
 		formData.append('file', file);
 		try {
 			await useApiFetch(`/events/${ event.value.id }/cover`, { method: 'PUT', body: formData });
-			alert('¡Portada actualizada!');
+
+			addNotification({
+				type: 'success',
+				message: 'Portada actualizada exitosamente.',
+			})
 			await refresh();
 		} catch(err) {
-			alert(err.data?.message || 'Error al subir imagen.');
+			addNotification({
+				type: 'error',
+				message: err.data?.message || 'Error al subir la imagen.',
+			})
 		} finally {
 			uploadingCover.value = false;
 		}
@@ -545,7 +558,10 @@
 				method: 'POST',
 				body: { amount: joinAmount.value },
 			});
-			alert('¡Gracias por tu apoyo!');
+			addNotification({
+				type: 'success',
+				message: `¡Gracias por tu aporte de $${ joinAmount.value.toLocaleString() }!`,
+			})
 			joinAmount.value = '';
 			await Promise.all([ refresh(), authStore.fetchUser() ]);
 		} catch(err) {
@@ -556,28 +572,56 @@
 	}
 
 	async function simulateDeadlineReached() {
-		if(!confirm('¿Simular que llegó el deadline sin cumplir la meta? Esto disparará reembolsos automáticamente.')) return;
+		const conf = await useConfirm({
+			title: 'Simular Deadline',
+			message: '¿Simular que llegó el deadline sin cumplir la meta? Esto disparará reembolsos automáticamente.',
+			options: {
+				confirmText: 'Simular Deadline',
+				cancelText: 'Cancelar'
+			},
+		});
+		if(!conf) return;
 		simulatingDeadline.value = true;
 		try {
 			const { data } = await useApiFetch(`/events/${ event.value.id }/simulate-deadline`, { method: 'POST' });
-			alert(data.value?.message || 'Deadline simulado. Evento cancelado y reembolsos procesados.');
+			addNotification({
+				type: 'success',
+				message: data.value?.message || 'Deadline simulado exitosamente.',
+			})
 			await refresh();
 		} catch(e) {
-			alert(e.data?.message || 'Error simulando deadline.');
+			addNotification({
+				type: 'error',
+				message: e.data?.message || 'Error al simular deadline.',
+			})
 		} finally {
 			simulatingDeadline.value = false;
 		}
 	}
 
 	async function handleCancelEvent() {
-		if(!confirm('¿Estás seguro de que quieres CANCELAR este evento? Se reembolsará a todos los participantes. Esta acción es irreversible.')) return;
+		const conf = await useConfirm({
+			title: 'Cancelar Evento',
+			message: '¿Estás seguro de que quieres cancelar este evento? Se reembolsará a todos los participantes. Esta acción es irreversible.',
+			options: {
+				confirmText: 'Cancelar Evento',
+				cancelText: 'No, volver atrás'
+			},
+		});
+		if(!conf) return;
 		cancelingEvent.value = true;
 		try {
 			await useApiFetch(`/events/${ event.value.id }`, { method: 'DELETE' });
-			alert('Evento cancelado. Reembolsos procesados.');
+			addNotification({
+				type: 'success',
+				message: 'Evento cancelado y reembolsos procesados.',
+			})
 			await refresh();
 		} catch(e) {
-			alert(e.data?.message || 'Error al cancelar evento.');
+			addNotification({
+				type: 'error',
+				message: e.data?.message || 'Error al cancelar el evento.',
+			})
 		} finally {
 			cancelingEvent.value = false;
 		}
@@ -585,11 +629,22 @@
 
 	async function handleStatusChange() {
 		if(selectedStatus.value === event.value.status) {
-			alert('El evento ya está en este estado.');
+			addNotification({
+				type: 'info',
+				message: 'El evento ya está en este estado.',
+			})
 			return;
 		}
 		const confirmMessage = selectedStatus.value === 'CANCELLED' ? '¿Seguro que quieres CANCELAR? Los fondos se reembolsarán.' : `¿Cambiar estado a ${ selectedStatus.value }?`;
-		if(!confirm(confirmMessage)) {
+		const conf = await useConfirm({
+			title: 'Cambiar Estado del Evento',
+			message: confirmMessage,
+			options: {
+				confirmText: 'Sí, cambiar estado',
+				cancelText: 'No, volver atrás'
+			},
+		});
+		if(!conf) {
 			selectedStatus.value = event.value.status;
 			return;
 		}
@@ -599,10 +654,16 @@
 				method: 'PUT',
 				body: { status: selectedStatus.value },
 			});
-			alert('¡Estado del evento actualizado!');
+			addNotification({
+				type: 'success',
+				message: `Estado cambiado a ${ selectedStatus.value }.`,
+			})
 			await refresh();
 		} catch(e) {
-			alert(e.data?.message || 'No se pudo cambiar el estado.');
+			addNotification({
+				type: 'error',
+				message: e.data?.message || 'No se pudo cambiar el estado del evento.',
+			})
 			selectedStatus.value = event.value.status;
 		} finally {
 			statusChangeLoading.value = false;

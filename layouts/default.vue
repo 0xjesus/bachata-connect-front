@@ -1,6 +1,8 @@
 <!-- layouts/default.vue -->
 <template>
 	<div class="min-h-screen text-white font-sans relative overflow-x-hidden">
+		<TheNotifier />
+		<ConfirmationModal />
 		<!-- Global Background Effects -->
 		<div class="fixed inset-0 pointer-events-none z-0">
 			<img

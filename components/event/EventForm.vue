@@ -229,7 +229,7 @@
 </template>
 
 <script setup>
-	import { ref, computed } from 'vue';
+	const { addNotification } = useNotifications();
 
 	const props = defineProps({
 		initialData: {
@@ -261,7 +261,10 @@
 
 	function handleSubmit() {
 		if(!acceptTerms.value) {
-			alert('Debes aceptar los términos y condiciones.');
+			addNotification({
+				type: 'error',
+				message: 'Debes aceptar los términos y condiciones para continuar.',
+			})
 			return;
 		}
 		// CORRECCIÓN: No se renombra nada. Se envía el objeto del formulario tal cual.
