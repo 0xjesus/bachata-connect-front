@@ -376,10 +376,10 @@
 <script setup>
 	const { addNotification } = useNotifications();
 	definePageMeta({ middleware: 'auth' });
-	const { show: showConfirmationDialog } = useConfirmation();
 	const route = useRoute();
 	const slug = route.params.slug;
 	const authStore = useAuthStore();
+	const confirm = useConfirmation();
 
 	// --- State refs ---
 	const fileInput = ref(null);
@@ -636,7 +636,7 @@
 			return;
 		}
 		const confirmMessage = selectedStatus.value === 'CANCELLED' ? '¿Seguro que quieres CANCELAR? Los fondos se reembolsarán.' : `¿Cambiar estado a ${ selectedStatus.value }?`;
-		const conf = await useConfirm({
+		const conf =  await confirm.show({
 			title: 'Cambiar Estado del Evento',
 			message: confirmMessage,
 			options: {
