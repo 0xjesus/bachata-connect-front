@@ -497,13 +497,21 @@
 		addNotification({
 			type: 'success',
 			message: '¡Meta alcanzada! Iniciando la liberación de fondos a tu wallet...',
-		})
+		});
 		try {
-			await useApiFetch(`/events/${ event.value.id }/payout`, { method: 'POST' });
+			const { data, error } = await useApiFetch(`/events/${ event.value.id }/payout`, { method: 'POST' });
+			if(error.value) {
+				addNotification({
+					type: 'error',
+					message: error.value.data?.message || 'Error al procesar el pago.',
+				});
+				return;
+			}
 			addNotification({
 				type: 'success',
 				message: 'Fondos liberados exitosamente. ¡Gracias por organizar este evento!',
-			})
+			});
+			await new Promise(resolve => setTimeout(resolve, 200));
 			await Promise.all([
 				refresh(), // 1. Refresca los datos del evento (ahora estará 'COMPLETED').
 				authStore.fetchUser(), // 2. Refresca los datos del usuario (¡incluyendo el nuevo balance!).
@@ -514,7 +522,7 @@
 			addNotification({
 				type: 'error',
 				message: `Error al procesar el pago: ${ e.data?.message || e.message }`,
-			})
+			});
 		} finally {
 			payoutLoading.value = false;
 		}
@@ -529,18 +537,27 @@
 		const formData = new FormData();
 		formData.append('file', file);
 		try {
-			await useApiFetch(`/events/${ event.value.id }/cover`, { method: 'PUT', body: formData });
-
+			const { data, error } = await useApiFetch(`/events/${ event.value.id }/cover`, {
+				method: 'PUT',
+				body: formData,
+			});
+			if(error.value) {
+				addNotification({
+					type: 'error',
+					message: error.value.data?.message || 'Error al subir la imagen.',
+				});
+				return;
+			}
 			addNotification({
 				type: 'success',
 				message: 'Portada actualizada exitosamente.',
-			})
+			});
 			await refresh();
 		} catch(err) {
 			addNotification({
 				type: 'error',
 				message: err.data?.message || 'Error al subir la imagen.',
-			})
+			});
 		} finally {
 			uploadingCover.value = false;
 		}
@@ -554,15 +571,24 @@
 		joinLoading.value = true;
 		joinError.value = '';
 		try {
-			await useApiFetch(`/events/${ event.value.id }/join`, {
+			const { data, error } = await useApiFetch(`/events/${ event.value.id }/join`, {
 				method: 'POST',
 				body: { amount: joinAmount.value },
 			});
+			if(error.value) {
+				addNotification({
+					type: 'error',
+					message: error.value.data?.message || 'Error al procesar el aporte.',
+				});
+				return;
+			}
 			addNotification({
 				type: 'success',
 				message: `¡Gracias por tu aporte de $${ joinAmount.value.toLocaleString() }!`,
-			})
+			});
 			joinAmount.value = '';
+			// espera un momento
+			await new Promise(resolve => setTimeout(resolve, 200));
 			await Promise.all([ refresh(), authStore.fetchUser() ]);
 		} catch(err) {
 			joinError.value = err.data?.message || 'Error al procesar el aporte.';
@@ -572,56 +598,77 @@
 	}
 
 	async function simulateDeadlineReached() {
-		const conf = await useConfirm({
+		const conf = await confirm.show({
 			title: 'Simular Deadline',
 			message: '¿Simular que llegó el deadline sin cumplir la meta? Esto disparará reembolsos automáticamente.',
 			options: {
 				confirmText: 'Simular Deadline',
-				cancelText: 'Cancelar'
+				cancelText: 'Cancelar',
 			},
 		});
 		if(!conf) return;
 		simulatingDeadline.value = true;
 		try {
-			const { data } = await useApiFetch(`/events/${ event.value.id }/simulate-deadline`, { method: 'POST' });
+			const {
+				data,
+				error,
+			} = await useApiFetch(`/events/${ event.value.id }/simulate-deadline`, { method: 'POST' });
+			if(error.value) {
+				addNotification({
+					type: 'error',
+					message: error.value.data?.message || 'Error al simular deadline.',
+				});
+				return;
+			}
 			addNotification({
 				type: 'success',
 				message: data.value?.message || 'Deadline simulado exitosamente.',
-			})
+			});
+			// espera un momento
+			await new Promise(resolve => setTimeout(resolve, 200));
 			await refresh();
 		} catch(e) {
 			addNotification({
 				type: 'error',
 				message: e.data?.message || 'Error al simular deadline.',
-			})
+			});
 		} finally {
 			simulatingDeadline.value = false;
 		}
 	}
 
 	async function handleCancelEvent() {
-		const conf = await useConfirm({
+		const conf = await confirm.show({
 			title: 'Cancelar Evento',
 			message: '¿Estás seguro de que quieres cancelar este evento? Se reembolsará a todos los participantes. Esta acción es irreversible.',
 			options: {
 				confirmText: 'Cancelar Evento',
-				cancelText: 'No, volver atrás'
+				cancelText: 'No, volver atrás',
 			},
 		});
 		if(!conf) return;
 		cancelingEvent.value = true;
 		try {
-			await useApiFetch(`/events/${ event.value.id }`, { method: 'DELETE' });
+			const { data, error } = await useApiFetch(`/events/${ event.value.id }`, { method: 'DELETE' });
+			if(error.value) {
+				addNotification({
+					type: 'error',
+					message: error.value.data?.message || 'Error al cancelar el evento.',
+				});
+				return;
+			}
 			addNotification({
 				type: 'success',
 				message: 'Evento cancelado y reembolsos procesados.',
-			})
+			});
+			// espera un momento
+			await new Promise(resolve => setTimeout(resolve, 200));
 			await refresh();
 		} catch(e) {
 			addNotification({
 				type: 'error',
 				message: e.data?.message || 'Error al cancelar el evento.',
-			})
+			});
 		} finally {
 			cancelingEvent.value = false;
 		}
@@ -632,16 +679,16 @@
 			addNotification({
 				type: 'info',
 				message: 'El evento ya está en este estado.',
-			})
+			});
 			return;
 		}
 		const confirmMessage = selectedStatus.value === 'CANCELLED' ? '¿Seguro que quieres CANCELAR? Los fondos se reembolsarán.' : `¿Cambiar estado a ${ selectedStatus.value }?`;
-		const conf =  await confirm.show({
+		const conf = await confirm.show({
 			title: 'Cambiar Estado del Evento',
 			message: confirmMessage,
 			options: {
 				confirmText: 'Sí, cambiar estado',
-				cancelText: 'No, volver atrás'
+				cancelText: 'No, volver atrás',
 			},
 		});
 		if(!conf) {
@@ -650,20 +697,30 @@
 		}
 		statusChangeLoading.value = true;
 		try {
-			await useApiFetch(`/events/${ event.value.id }/status`, {
+			const {data, error} = await useApiFetch(`/events/${ event.value.id }/status`, {
 				method: 'PUT',
 				body: { status: selectedStatus.value },
 			});
+			if(error.value) {
+				addNotification({
+					type: 'error',
+					message: error.value.data?.message || 'No se pudo cambiar el estado del evento.',
+				});
+				selectedStatus.value = event.value.status;
+				return;
+			}
 			addNotification({
 				type: 'success',
 				message: `Estado cambiado a ${ selectedStatus.value }.`,
-			})
+			});
+			/// espera un momento
+			await new Promise(resolve => setTimeout(resolve, 200));
 			await refresh();
 		} catch(e) {
 			addNotification({
 				type: 'error',
 				message: e.data?.message || 'No se pudo cambiar el estado del evento.',
-			})
+			});
 			selectedStatus.value = event.value.status;
 		} finally {
 			statusChangeLoading.value = false;

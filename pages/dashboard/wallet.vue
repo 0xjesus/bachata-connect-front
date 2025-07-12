@@ -179,6 +179,8 @@
 </template>
 <script setup>
 	definePageMeta({ middleware: 'auth' });
+	const { addNotification } = useNotifications();
+
 	const authStore = useAuthStore();
 	// --- STATE ---
 	const loadingTransactions = ref(false);
@@ -242,6 +244,10 @@
 			if(error.value) {
 				console.error('❌ Error fondeando cuenta:', error.value);
 				// Aquí puedes agregar notificación de error
+				addNotification({
+					type: 'error',
+					message: error.value.data?.message || 'No se pudo fondear la cuenta. Inténtalo más tarde.',
+				});
 			} else {
 				console.log('✅ Cuenta fondeada exitosamente');
 				// Refrescar el balance del usuario
